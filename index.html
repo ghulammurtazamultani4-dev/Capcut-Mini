@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<title>Ghulam Murtaza – CapCut Mini App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins&family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;background:#090909;color:#fff;font-family:Poppins}
+header{text-align:center;padding:14px;background:#111}
+header img{width:85px;height:85px;border-radius:50%;border:3px solid #ff2c55}
+.editor{display:flex;flex-wrap:wrap}
+.left{width:70%;padding:10px}
+.right{width:30%;padding:10px;background:#111}
+video,canvas{width:100%;border-radius:10px}
+button,input,select{width:100%;margin-top:6px;padding:7px;border:none;border-radius:6px;background:#ff2c55;color:#fff}
+input[type=range],input[type=color]{background:none}
+.layer{background:#222;padding:5px;margin-top:4px;font-size:12px}
+@media(max-width:768px){.left,.right{width:100%}}
+</style>
+</head>
+
+<body>
+
+<header>
+<img src="profile.jpg">
+<h2>Ghulam Murtaza</h2>
+<p>CapCut Mini Web App – LEVEL 4</p>
+</header>
+
+<div class="editor">
+
+<div class="left">
+<video id="video" controls></video>
+<canvas id="canvas"></canvas>
+</div>
+
+<div class="right">
+
+<label>🎥 Video</label>
+<input type="file" id="videoFile" accept="video/*">
+
+<label>➕ Text Layer</label>
+<input type="text" id="txtInput" placeholder="اردو / English">
+<select id="fontSel">
+<option value="Poppins">English</option>
+<option value="'Noto Nastaliq Urdu'">Urdu Nastaliq</option>
+</select>
+<button onclick="addText()">Add Text</button>
+
+<label>🖼 Sticker / Image</label>
+<input type="file" id="imgFile" accept="image/*">
+
+<label>🎨 Filters</label>
+<input type="range" id="bright" min="50" max="150" value="100">
+<input type="range" id="contrast" min="50" max="150" value="100">
+<input type="range" id="blur" min="0" max="5" value="0">
+
+<label>🧠 Auto Caption (Beta)</label>
+<button onclick="startCaption()">Start Caption</button>
+
+<label>📥 Export</label>
+<button onclick="exportVideo()">Download Video</button>
+
+<div id="layers"></div>
+
+</div>
+</div>
+
+<script>
+const video=document.getElementById("video");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+let layers=[];
+let drag=null;
+
+videoFile.onchange=e=>video.src=URL.createObjectURL(e.target.files[0]);
+
+function addText(){
+layers.push({type:"text",text:txtInput.value,x:100,y:100,font:fontSel.value,size:36});
+renderLayers();
+}
+
+imgFile.onchange=e=>{
+let img=new Image();
+img.src=URL.createObjectURL(e.target.files[0]);
+layers.push({type:"img",img,x:150,y:150,w:120,h:120});
+renderLayers();
+};
+
+canvas.onmousedown=e=>{
+drag=layers.find(l=>Math.abs(l.x-e.offsetX)<80 && Math.abs(l.y-e.offsetY)<50);
+};
+canvas.onmouseup=()=>drag=null;
+canvas.onmousemove=e=>{
+if(drag){drag.x=e.offsetX;drag.y=e.offsetY;}
+};
+
+function renderLayers(){
+layersDiv.innerHTML="";
+layers.forEach((l,i)=>{
+let d=document.createElement("div");
+d.className="layer";
+d.innerText=(i+1)+" - "+l.type;
+layersDiv.appendChild(d);
+});
+}
+
+function draw(){
+if(video.paused||video.ended)return;
+canvas.width=video.videoWidth;
+canvas.height=video.videoHeight;
+
+ctx.filter=`brightness(${bright.value}%) contrast(${contrast.value}%) blur(${blur.value}px)`;
+ctx.drawImage(video,0,0,canvas.width,canvas.height);
+ctx.filter="none";
+
+layers.forEach(l=>{
+if(l.type=="text"){
+ctx.font=l.size+"px "+l.font;
+ctx.fillStyle="white";
+ctx.fillText(l.text,l.x,l.y);
+}
+if(l.type=="img"){
+ctx.drawImage(l.img,l.x,l.y,l.w,l.h);
+}
+});
+
+requestAnimationFrame(draw);
+}
+video.onplay=draw;
+
+function startCaption(){
+let rec=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
+rec.lang="en-US";
+rec.onresult=e=>{
+layers.push({type:"text",text:e.results[0][0].transcript,x:80,y:canvas.height-50,font:"Poppins",size:28});
+renderLayers();
+};
+rec.start();
+}
+
+function exportVideo(){
+let stream=canvas.captureStream();
+let r=new MediaRecorder(stream);
+let data=[];
+r.ondataavailable=e=>data.push(e.data);
+r.onstop=()=>{
+let b=new Blob(data,{type:"video/webm"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(b);
+a.download="capcut_level4.webm";
+a.click();
+};
+r.start();
+video.play();
+setTimeout(()=>{r.stop();video.pause();},video.duration*1000);
+}
+</script>
+
+</body>
+</html>
