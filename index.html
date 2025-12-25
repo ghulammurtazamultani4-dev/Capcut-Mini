@@ -1,69 +1,191 @@
 <!DOCTYPE html>
-<html lang="ur">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ghulam Murtaza – CapCut Mini App</title>
+<title>Ghulam Murtaza | CapCut Mini Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins&family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+<!-- Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
 <style>
-body{margin:0;background:#090909;color:#fff;font-family:Poppins}
-header{text-align:center;padding:14px;background:#111}
-header img{width:85px;height:85px;border-radius:50%;border:3px solid #ff2c55}
-.editor{display:flex;flex-wrap:wrap}
-.left{width:70%;padding:10px}
-.right{width:30%;padding:10px;background:#111}
-video,canvas{width:100%;border-radius:10px}
-button,input,select{width:100%;margin-top:6px;padding:7px;border:none;border-radius:6px;background:#ff2c55;color:#fff}
-input[type=range],input[type=color]{background:none}
-.layer{background:#222;padding:5px;margin-top:4px;font-size:12px}
-@media(max-width:768px){.left,.right{width:100%}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+    background:#0e0e0e;
+    color:#fff;
+    font-family:Segoe UI,Arial;
+    overflow:hidden;
+}
+
+/* HEADER */
+header{
+    height:70px;
+    background:#111;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-bottom:1px solid #222;
+}
+header h1{
+    font-size:18px;
+    font-weight:600;
+    color:#fff;
+}
+header span{
+    color:#ff2c55;
+}
+
+/* MAIN LAYOUT */
+.main{
+    display:grid;
+    grid-template-columns:240px 1fr;
+    height:calc(100vh - 70px);
+}
+
+/* LEFT PANEL */
+.tools{
+    background:#151515;
+    padding:15px;
+    border-right:1px solid #222;
+}
+.tool{
+    background:#1f1f1f;
+    padding:12px;
+    margin-bottom:10px;
+    border-radius:8px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    transition:.2s;
+}
+.tool:hover{
+    background:#ff2c55;
+}
+.tool i{
+    font-size:18px;
+}
+
+/* EDITOR AREA */
+.editor{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:#0b0b0b;
+    position:relative;
+}
+
+/* VIDEO PREVIEW */
+.preview{
+    width:70%;
+    max-width:900px;
+    aspect-ratio:16/9;
+    background:#000;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 0 30px rgba(0,0,0,.7);
+}
+video,canvas{
+    width:100%;
+    height:100%;
+    border-radius:12px;
+}
+
+/* CONTROLS */
+.controls{
+    margin-top:15px;
+    display:flex;
+    gap:10px;
+}
+.controls input,
+.controls button{
+    background:#ff2c55;
+    border:none;
+    color:#fff;
+    padding:8px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+/* TIMELINE */
+.timeline{
+    position:absolute;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:120px;
+    background:#111;
+    border-top:1px solid #222;
+    padding:15px;
+}
+.track{
+    height:40px;
+    background:#1e1e1e;
+    border-radius:6px;
+    position:relative;
+}
+.clip{
+    position:absolute;
+    height:100%;
+    width:30%;
+    background:#ff2c55;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+    .preview{width:95%}
+    .main{grid-template-columns:70px 1fr}
+    .tool span{display:none}
+}
 </style>
 </head>
 
 <body>
 
 <header>
-<img src="profile.jpg">
-<h2>Ghulam Murtaza</h2>
-<p>CapCut Mini Web App – LEVEL 4</p>
+<h1><span>CapCut</span> Mini Editor — Ghulam Murtaza</h1>
 </header>
 
-<div class="editor">
+<div class="main">
 
-<div class="left">
-<video id="video" controls></video>
-<canvas id="canvas"></canvas>
+<!-- TOOLS -->
+<div class="tools">
+    <div class="tool"><i class="fa-solid fa-video"></i><span>Media</span></div>
+    <div class="tool"><i class="fa-solid fa-font"></i><span>Text</span></div>
+    <div class="tool"><i class="fa-solid fa-face-smile"></i><span>Stickers</span></div>
+    <div class="tool"><i class="fa-solid fa-sliders"></i><span>Filters</span></div>
+    <div class="tool"><i class="fa-solid fa-music"></i><span>Audio</span></div>
+    <div class="tool"><i class="fa-solid fa-download"></i><span>Export</span></div>
 </div>
 
-<div class="right">
+<!-- EDITOR -->
+<div class="editor">
 
-<label>🎥 Video</label>
-<input type="file" id="videoFile" accept="video/*">
+    <div class="preview">
+        <video id="video" controls></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
 
-<label>➕ Text Layer</label>
-<input type="text" id="txtInput" placeholder="اردو / English">
-<select id="fontSel">
-<option value="Poppins">English</option>
-<option value="'Noto Nastaliq Urdu'">Urdu Nastaliq</option>
-</select>
-<button onclick="addText()">Add Text</button>
+    <div class="controls">
+        <input type="file" id="videoFile" accept="video/*">
+        <button onclick="addText()">Add Text</button>
+        <button onclick="exportVideo()">Export</button>
+    </div>
 
-<label>🖼 Sticker / Image</label>
-<input type="file" id="imgFile" accept="image/*">
-
-<label>🎨 Filters</label>
-<input type="range" id="bright" min="50" max="150" value="100">
-<input type="range" id="contrast" min="50" max="150" value="100">
-<input type="range" id="blur" min="0" max="5" value="0">
-
-<label>🧠 Auto Caption (Beta)</label>
-<button onclick="startCaption()">Start Caption</button>
-
-<label>📥 Export</label>
-<button onclick="exportVideo()">Download Video</button>
-
-<div id="layers"></div>
+    <!-- TIMELINE -->
+    <div class="timeline">
+        <div class="track">
+            <div class="clip">Video Clip</div>
+        </div>
+    </div>
 
 </div>
 </div>
@@ -72,90 +194,17 @@ input[type=range],input[type=color]{background:none}
 const video=document.getElementById("video");
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
-let layers=[];
-let drag=null;
 
-videoFile.onchange=e=>video.src=URL.createObjectURL(e.target.files[0]);
+document.getElementById("videoFile").onchange=e=>{
+    video.src=URL.createObjectURL(e.target.files[0]);
+};
 
 function addText(){
-layers.push({type:"text",text:txtInput.value,x:100,y:100,font:fontSel.value,size:36});
-renderLayers();
-}
-
-imgFile.onchange=e=>{
-let img=new Image();
-img.src=URL.createObjectURL(e.target.files[0]);
-layers.push({type:"img",img,x:150,y:150,w:120,h:120});
-renderLayers();
-};
-
-canvas.onmousedown=e=>{
-drag=layers.find(l=>Math.abs(l.x-e.offsetX)<80 && Math.abs(l.y-e.offsetY)<50);
-};
-canvas.onmouseup=()=>drag=null;
-canvas.onmousemove=e=>{
-if(drag){drag.x=e.offsetX;drag.y=e.offsetY;}
-};
-
-function renderLayers(){
-layersDiv.innerHTML="";
-layers.forEach((l,i)=>{
-let d=document.createElement("div");
-d.className="layer";
-d.innerText=(i+1)+" - "+l.type;
-layersDiv.appendChild(d);
-});
-}
-
-function draw(){
-if(video.paused||video.ended)return;
-canvas.width=video.videoWidth;
-canvas.height=video.videoHeight;
-
-ctx.filter=`brightness(${bright.value}%) contrast(${contrast.value}%) blur(${blur.value}px)`;
-ctx.drawImage(video,0,0,canvas.width,canvas.height);
-ctx.filter="none";
-
-layers.forEach(l=>{
-if(l.type=="text"){
-ctx.font=l.size+"px "+l.font;
-ctx.fillStyle="white";
-ctx.fillText(l.text,l.x,l.y);
-}
-if(l.type=="img"){
-ctx.drawImage(l.img,l.x,l.y,l.w,l.h);
-}
-});
-
-requestAnimationFrame(draw);
-}
-video.onplay=draw;
-
-function startCaption(){
-let rec=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
-rec.lang="en-US";
-rec.onresult=e=>{
-layers.push({type:"text",text:e.results[0][0].transcript,x:80,y:canvas.height-50,font:"Poppins",size:28});
-renderLayers();
-};
-rec.start();
+    alert("Demo Version:\nText tool UI ready.\nAdvanced editing next update.");
 }
 
 function exportVideo(){
-let stream=canvas.captureStream();
-let r=new MediaRecorder(stream);
-let data=[];
-r.ondataavailable=e=>data.push(e.data);
-r.onstop=()=>{
-let b=new Blob(data,{type:"video/webm"});
-let a=document.createElement("a");
-a.href=URL.createObjectURL(b);
-a.download="capcut_level4.webm";
-a.click();
-};
-r.start();
-video.play();
-setTimeout(()=>{r.stop();video.pause();},video.duration*1000);
+    alert("Export demo.\nReal export FFmpeg WASM se hota hai.");
 }
 </script>
 
