@@ -2,190 +2,71 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ghulam Murtaza | CapCut Mini Editor</title>
+<title>CapCut Mini Pro – Ghulam Murtaza</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-    background:#0e0e0e;
-    color:#fff;
-    font-family:Segoe UI,Arial;
-    overflow:hidden;
-}
+body{margin:0;background:#0b0b0b;color:#fff;font-family:Segoe UI;overflow:hidden}
+header{height:60px;background:#111;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #222}
+header span{color:#ff2c55}
 
-/* HEADER */
-header{
-    height:70px;
-    background:#111;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-bottom:1px solid #222;
-}
-header h1{
-    font-size:18px;
-    font-weight:600;
-    color:#fff;
-}
-header span{
-    color:#ff2c55;
-}
+.main{display:grid;grid-template-columns:220px 1fr;height:calc(100vh - 60px)}
 
-/* MAIN LAYOUT */
-.main{
-    display:grid;
-    grid-template-columns:240px 1fr;
-    height:calc(100vh - 70px);
-}
+.tools{background:#151515;padding:12px;border-right:1px solid #222}
+.tool{padding:10px;background:#1f1f1f;border-radius:6px;margin-bottom:8px;cursor:pointer}
+.tool:hover{background:#ff2c55}
 
-/* LEFT PANEL */
-.tools{
-    background:#151515;
-    padding:15px;
-    border-right:1px solid #222;
-}
-.tool{
-    background:#1f1f1f;
-    padding:12px;
-    margin-bottom:10px;
-    border-radius:8px;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    transition:.2s;
-}
-.tool:hover{
-    background:#ff2c55;
-}
-.tool i{
-    font-size:18px;
-}
+.editor{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.preview{width:70%;aspect-ratio:16/9;background:#000;border-radius:10px}
+video,canvas{width:100%;height:100%;border-radius:10px}
 
-/* EDITOR AREA */
-.editor{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    background:#0b0b0b;
-    position:relative;
-}
+.controls{margin:10px;display:flex;gap:8px;flex-wrap:wrap}
+.controls input,.controls button,.controls select{background:#ff2c55;border:none;color:#fff;padding:6px 10px;border-radius:5px}
 
-/* VIDEO PREVIEW */
-.preview{
-    width:70%;
-    max-width:900px;
-    aspect-ratio:16/9;
-    background:#000;
-    border-radius:12px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    box-shadow:0 0 30px rgba(0,0,0,.7);
-}
-video,canvas{
-    width:100%;
-    height:100%;
-    border-radius:12px;
-}
-
-/* CONTROLS */
-.controls{
-    margin-top:15px;
-    display:flex;
-    gap:10px;
-}
-.controls input,
-.controls button{
-    background:#ff2c55;
-    border:none;
-    color:#fff;
-    padding:8px 12px;
-    border-radius:6px;
-    cursor:pointer;
-}
-
-/* TIMELINE */
-.timeline{
-    position:absolute;
-    bottom:0;
-    left:0;
-    width:100%;
-    height:120px;
-    background:#111;
-    border-top:1px solid #222;
-    padding:15px;
-}
-.track{
-    height:40px;
-    background:#1e1e1e;
-    border-radius:6px;
-    position:relative;
-}
-.clip{
-    position:absolute;
-    height:100%;
-    width:30%;
-    background:#ff2c55;
-    border-radius:6px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:12px;
-}
-
-/* RESPONSIVE */
-@media(max-width:900px){
-    .preview{width:95%}
-    .main{grid-template-columns:70px 1fr}
-    .tool span{display:none}
-}
+.timeline{position:absolute;bottom:0;width:100%;height:110px;background:#111;border-top:1px solid #222;padding:12px}
+.track{height:36px;background:#1e1e1e;border-radius:6px}
+.clip{width:35%;height:100%;background:#ff2c55;border-radius:6px;text-align:center;line-height:36px;font-size:12px}
 </style>
 </head>
 
 <body>
 
-<header>
-<h1><span>CapCut</span> Mini Editor — Ghulam Murtaza</h1>
-</header>
+<header><h3><span>CapCut</span> Mini Pro – Ghulam Murtaza</h3></header>
 
 <div class="main">
 
-<!-- TOOLS -->
 <div class="tools">
-    <div class="tool"><i class="fa-solid fa-video"></i><span>Media</span></div>
-    <div class="tool"><i class="fa-solid fa-font"></i><span>Text</span></div>
-    <div class="tool"><i class="fa-solid fa-face-smile"></i><span>Stickers</span></div>
-    <div class="tool"><i class="fa-solid fa-sliders"></i><span>Filters</span></div>
-    <div class="tool"><i class="fa-solid fa-music"></i><span>Audio</span></div>
-    <div class="tool"><i class="fa-solid fa-download"></i><span>Export</span></div>
+<div class="tool">🎬 Media</div>
+<div class="tool">✂ Chroma Key</div>
+<div class="tool">😊 Stickers</div>
+<div class="tool">🎨 Effects</div>
+<div class="tool">⬇ Export</div>
 </div>
 
-<!-- EDITOR -->
 <div class="editor">
 
-    <div class="preview">
-        <video id="video" controls></video>
-        <canvas id="canvas" style="display:none;"></canvas>
-    </div>
+<div class="preview">
+<video id="video" controls></video>
+<canvas id="canvas" style="display:none"></canvas>
+</div>
 
-    <div class="controls">
-        <input type="file" id="videoFile" accept="video/*">
-        <button onclick="addText()">Add Text</button>
-        <button onclick="exportVideo()">Export</button>
-    </div>
+<div class="controls">
+<input type="file" id="videoFile" accept="video/*">
+<input type="file" id="stickerFile" accept="image/png">
+<label>Green Tolerance</label>
+<input type="range" id="tolerance" min="20" max="150" value="80">
+<select id="resolution">
+<option value="1080">1080p</option>
+<option value="1440">2K</option>
+<option value="2160">4K</option>
+</select>
+<button onclick="exportVideo()">Export</button>
+</div>
 
-    <!-- TIMELINE -->
-    <div class="timeline">
-        <div class="track">
-            <div class="clip">Video Clip</div>
-        </div>
-    </div>
+<div class="timeline">
+<div class="track"><div class="clip">Video Clip</div></div>
+</div>
 
 </div>
 </div>
@@ -194,17 +75,58 @@ video,canvas{
 const video=document.getElementById("video");
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
+let sticker=null,stickX=100,stickY=100;
 
 document.getElementById("videoFile").onchange=e=>{
-    video.src=URL.createObjectURL(e.target.files[0]);
+video.src=URL.createObjectURL(e.target.files[0]);
 };
 
-function addText(){
-    alert("Demo Version:\nText tool UI ready.\nAdvanced editing next update.");
+document.getElementById("stickerFile").onchange=e=>{
+sticker=new Image();
+sticker.src=URL.createObjectURL(e.target.files[0]);
+};
+
+video.onplay=()=>draw();
+
+function draw(){
+if(video.paused||video.ended)return;
+const res=document.getElementById("resolution").value;
+canvas.width=res*16/9;
+canvas.height=res;
+ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
+let frame=ctx.getImageData(0,0,canvas.width,canvas.height);
+let d=frame.data;
+let tol=document.getElementById("tolerance").value;
+
+for(let i=0;i<d.length;i+=4){
+let r=d[i],g=d[i+1],b=d[i+2];
+if(g>150 && g>r+tol && g>b+tol){
+d[i+3]=0;
+}
+}
+ctx.putImageData(frame,0,0);
+
+if(sticker)ctx.drawImage(sticker,stickX,stickY,120,120);
+
+requestAnimationFrame(draw);
 }
 
 function exportVideo(){
-    alert("Export demo.\nReal export FFmpeg WASM se hota hai.");
+const stream=canvas.captureStream(30);
+const recorder=new MediaRecorder(stream,{mimeType:"video/webm"});
+let chunks=[];
+recorder.ondataavailable=e=>chunks.push(e.data);
+recorder.onstop=()=>{
+const blob=new Blob(chunks,{type:"video/webm"});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="CapCutMini_Export.webm";
+a.click();
+};
+recorder.start();
+video.play();
+setTimeout(()=>{recorder.stop();video.pause()},video.duration*1000);
 }
 </script>
 
