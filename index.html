@@ -1,91 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Ghulam Murtaza – ULTRA Video Editor</title>
+<title>ULTRA Video Editor – Ghulam Murtaza</title>
 
 <style>
 body{margin:0;background:#0b0b0b;color:#fff;font-family:Arial}
-header{background:#111;padding:10px;display:flex;gap:10px;align-items:center}
-header h2{margin:0;font-size:18px}
-header span{font-size:12px;color:#aaa}
-
-.editor{display:flex;height:calc(100vh - 60px)}
+header{background:#111;padding:10px}
+header h2{margin:0}
+.editor{display:flex;height:calc(100vh - 50px)}
 .left{width:70%;padding:10px}
 .right{width:30%;background:#131313;padding:10px;overflow:auto}
-
 video,canvas{width:100%;background:#000;border-radius:8px}
-
 .panel{background:#1a1a1a;padding:10px;margin-bottom:10px;border-radius:8px}
-.panel h3{margin:0 0 6px;font-size:14px;color:#ff2c55}
-
-button,input,select{
-width:100%;margin-top:6px;padding:7px;
-border:none;border-radius:6px;
-background:#ff2c55;color:white;cursor:pointer
-}
+.panel h3{margin:0 0 6px;color:#ff2c55;font-size:14px}
+button,input,select{width:100%;margin-top:6px;padding:7px;border:none;border-radius:6px;background:#ff2c55;color:#fff}
 input[type=range]{background:none}
-
 .timeline{background:#111;padding:6px;display:flex;gap:5px;overflow-x:auto}
 .clip{background:#333;padding:6px 10px;border-radius:6px;font-size:12px}
-
-@media(max-width:900px){
-.editor{flex-direction:column}
-.left,.right{width:100%}
-}
 </style>
 </head>
 
 <body>
 
 <header>
-<div>
-<h2>Ghulam Murtaza</h2>
-<span>ULTRA Video Editor – PART 2</span>
-</div>
+<h2>ULTRA VIDEO EDITOR – FINAL</h2>
 </header>
 
 <div class="editor">
 
-<!-- PREVIEW -->
 <div class="left">
 <video id="video" controls></video>
 <canvas id="canvas"></canvas>
 <div class="timeline" id="timeline"></div>
 </div>
 
-<!-- CONTROLS -->
 <div class="right">
 
 <div class="panel">
 <h3>🎬 Video</h3>
 <input type="file" id="videoFile" accept="video/*">
-<button onclick="splitVideo()">Split At Time</button>
-<button onclick="mergeInfo()">Merge Clips</button>
+<button onclick="addClip()">Add Clip</button>
 </div>
 
 <div class="panel">
-<h3>🎨 Effects</h3>
-<input type="range" id="blur" min="0" max="10" value="0">
-<input type="range" id="zoom" min="1" max="2" step="0.01" value="1">
+<h3>🟢 Green Screen</h3>
+<input type="range" id="green" min="0" max="255" value="150">
 </div>
 
 <div class="panel">
-<h3>🎤 Voice Recording</h3>
-<button onclick="startRec()">Start Recording</button>
-<button onclick="stopRec()">Stop Recording</button>
+<h3>🖼 Photo Editor</h3>
+<input type="file" id="photoFile" accept="image/*">
+<button onclick="addPhoto()">Add Photo</button>
+<input type="range" id="photoSize" min="50" max="400" value="150">
 </div>
 
 <div class="panel">
-<h3>✍ Auto Subtitles</h3>
-<button onclick="autoSub()">Generate (Demo)</button>
-<div id="subs" style="font-size:12px;color:#ccc"></div>
-</div>
-
-<div class="panel">
-<h3>↩ History</h3>
-<button onclick="undo()">Undo</button>
-<button onclick="redo()">Redo</button>
+<h3>🎧 Audio Editor</h3>
+<input type="file" id="audioFile" accept="audio/*">
+<button onclick="addAudio()">Add Audio</button>
+<input type="range" id="audioVolume" min="0" max="1" step="0.01" value="1">
 </div>
 
 <div class="panel">
@@ -93,7 +67,7 @@ input[type=range]{background:none}
 <select id="quality">
 <option value="1">1080p</option>
 <option value="1.5">2K</option>
-<option value="2">4K (Demo)</option>
+<option value="2">4K Preview</option>
 </select>
 <button onclick="exportVideo()">Export</button>
 </div>
@@ -107,112 +81,86 @@ const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
 const timeline=document.getElementById("timeline");
 
-let layers=[];
-let history=[],redoStack=[];
-let mediaRecorder,audioChunks=[];
+let clips=[],photos=[],audios=[];
 
 videoFile.onchange=e=>{
 video.src=URL.createObjectURL(e.target.files[0]);
-addClip("Video");
-save();
 };
 
-function addClip(name){
+function addClip(){
+clips.push(video.src);
+addTimeline("Video Clip");
+}
+
+function addTimeline(name){
 const d=document.createElement("div");
 d.className="clip";
 d.innerText=name;
 timeline.appendChild(d);
 }
 
-function splitVideo(){
-addClip("Split @ "+video.currentTime.toFixed(1));
-alert("Split demo added on timeline");
-save();
+function addPhoto(){
+const file=photoFile.files[0];
+if(!file)return;
+const img=new Image();
+img.src=URL.createObjectURL(file);
+photos.push({img,x:100,y:100,size:150});
+addTimeline("Photo");
 }
 
-function mergeInfo(){
-alert("Merge happens automatically on export");
+function addAudio(){
+const file=audioFile.files[0];
+if(!file)return;
+const audio=new Audio(URL.createObjectURL(file));
+audio.volume=audioVolume.value;
+audio.play();
+audios.push(audio);
+addTimeline("Audio");
 }
-
-blur.oninput=()=>save();
-zoom.oninput=()=>save();
 
 function draw(){
 if(video.paused||video.ended)return;
-canvas.width=video.videoWidth;
-canvas.height=video.videoHeight;
 
-ctx.filter=`blur(${blur.value}px)`;
-ctx.drawImage(
-video,
-(canvas.width*(1-zoom.value))/2,
-(canvas.height*(1-zoom.value))/2,
-canvas.width*zoom.value,
-canvas.height*zoom.value
-);
-ctx.filter="none";
+const scale=quality.value;
+canvas.width=video.videoWidth*scale;
+canvas.height=video.videoHeight*scale;
+
+ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
+/* GREEN SCREEN */
+const frame=ctx.getImageData(0,0,canvas.width,canvas.height);
+for(let i=0;i<frame.data.length;i+=4){
+if(frame.data[i+1]>green.value){
+frame.data[i+3]=0;
+}
+}
+ctx.putImageData(frame,0,0);
+
+/* PHOTOS */
+photos.forEach(p=>{
+ctx.drawImage(p.img,p.x,p.y,p.size,p.size);
+});
 
 requestAnimationFrame(draw);
 }
 video.onplay=draw;
 
-/* VOICE RECORD */
-async function startRec(){
-const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-mediaRecorder=new MediaRecorder(stream);
-mediaRecorder.start();
-audioChunks=[];
-mediaRecorder.ondataavailable=e=>audioChunks.push(e.data);
+canvas.onmousemove=e=>{
+if(photos.length){
+photos[photos.length-1].x=e.offsetX;
+photos[photos.length-1].y=e.offsetY;
 }
-
-function stopRec(){
-mediaRecorder.stop();
-mediaRecorder.onstop=()=>{
-const audioBlob=new Blob(audioChunks);
-const audio=new Audio(URL.createObjectURL(audioBlob));
-layers.push({type:"voice",audio});
-addClip("Voice");
-save();
 };
+photoSize.oninput=e=>{
+if(photos.length){
+photos[photos.length-1].size=e.target.value;
 }
+};
 
-/* AUTO SUBTITLE DEMO */
-function autoSub(){
-document.getElementById("subs").innerText=
-"Hello world (demo subtitles generated)";
-}
-
-/* HISTORY */
-function save(){
-history.push(JSON.stringify({
-blur:blur.value,
-zoom:zoom.value,
-layers
-}));
-redoStack=[];
-}
-function undo(){
-if(history.length<2)return;
-redoStack.push(history.pop());
-load(history[history.length-1]);
-}
-function redo(){
-if(!redoStack.length)return;
-load(redoStack.pop());
-}
-function load(state){
-const s=JSON.parse(state);
-blur.value=s.blur;
-zoom.value=s.zoom;
-layers=s.layers;
-}
-
-/* EXPORT */
 function exportVideo(){
-alert("ULTRA Export Demo\nReal encoder PART-3");
+alert("ULTRA FINAL EXPORT\nCanvas based 4K preview\n(Real encoder browser limit)");
 }
 </script>
 
 </body>
 </html>
-
