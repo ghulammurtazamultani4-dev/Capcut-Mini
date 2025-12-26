@@ -5,106 +5,33 @@
 <title>Ghulam Murtaza – ULTRA Video Editor</title>
 
 <style>
-body{
-    margin:0;
-    background:#0b0b0b;
-    color:#fff;
-    font-family:Arial,Helvetica,sans-serif;
-}
-header{
-    background:#111;
-    padding:10px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-}
-header img{
-    width:45px;
-    height:45px;
-    border-radius:50%;
-    border:2px solid #ff2c55;
-}
+body{margin:0;background:#0b0b0b;color:#fff;font-family:Arial}
+header{background:#111;padding:10px;display:flex;gap:10px;align-items:center}
 header h2{margin:0;font-size:18px}
 header span{font-size:12px;color:#aaa}
 
-.editor{
-    display:flex;
-    height:calc(100vh - 65px);
-}
-.left{
-    width:70%;
-    padding:10px;
-    position:relative;
-}
-.right{
-    width:30%;
-    background:#131313;
-    padding:10px;
-    overflow:auto;
-}
+.editor{display:flex;height:calc(100vh - 60px)}
+.left{width:70%;padding:10px}
+.right{width:30%;background:#131313;padding:10px;overflow:auto}
 
-video,canvas{
-    width:100%;
-    background:#000;
-    border-radius:8px;
-}
+video,canvas{width:100%;background:#000;border-radius:8px}
 
-.panel{
-    background:#1a1a1a;
-    padding:10px;
-    margin-bottom:10px;
-    border-radius:8px;
-}
-.panel h3{
-    margin:0 0 8px;
-    font-size:14px;
-    color:#ff2c55;
-}
+.panel{background:#1a1a1a;padding:10px;margin-bottom:10px;border-radius:8px}
+.panel h3{margin:0 0 6px;font-size:14px;color:#ff2c55}
 
 button,input,select{
-    width:100%;
-    margin-top:6px;
-    padding:7px;
-    border:none;
-    border-radius:6px;
-    background:#ff2c55;
-    color:white;
-    cursor:pointer;
+width:100%;margin-top:6px;padding:7px;
+border:none;border-radius:6px;
+background:#ff2c55;color:white;cursor:pointer
 }
-input[type=range],input[type=color]{
-    background:none;
-}
+input[type=range]{background:none}
 
-.layer{
-    background:#222;
-    padding:6px;
-    margin-top:4px;
-    font-size:12px;
-    border-radius:5px;
-}
-.layer.active{
-    outline:2px solid #ff2c55;
-}
-
-.timeline{
-    background:#111;
-    padding:8px;
-    display:flex;
-    gap:5px;
-    overflow-x:auto;
-    margin-top:8px;
-}
-.clip{
-    background:#333;
-    padding:6px 10px;
-    border-radius:6px;
-    font-size:12px;
-    white-space:nowrap;
-}
+.timeline{background:#111;padding:6px;display:flex;gap:5px;overflow-x:auto}
+.clip{background:#333;padding:6px 10px;border-radius:6px;font-size:12px}
 
 @media(max-width:900px){
-    .editor{flex-direction:column}
-    .left,.right{width:100%}
+.editor{flex-direction:column}
+.left,.right{width:100%}
 }
 </style>
 </head>
@@ -112,45 +39,47 @@ input[type=range],input[type=color]{
 <body>
 
 <header>
-<img src="profile.jpg" onerror="this.style.display='none'">
 <div>
 <h2>Ghulam Murtaza</h2>
-<span>ULTRA Video Editor – Core Engine</span>
+<span>ULTRA Video Editor – PART 2</span>
 </div>
 </header>
 
 <div class="editor">
 
-<!-- PREVIEW AREA -->
+<!-- PREVIEW -->
 <div class="left">
 <video id="video" controls></video>
 <canvas id="canvas"></canvas>
-
 <div class="timeline" id="timeline"></div>
 </div>
 
-<!-- CONTROL PANELS -->
+<!-- CONTROLS -->
 <div class="right">
 
 <div class="panel">
 <h3>🎬 Video</h3>
 <input type="file" id="videoFile" accept="video/*">
-<button onclick="splitVideo()">Split</button>
+<button onclick="splitVideo()">Split At Time</button>
+<button onclick="mergeInfo()">Merge Clips</button>
 </div>
 
 <div class="panel">
-<h3>🖼 Photo Layer</h3>
-<input type="file" id="photoFile" accept="image/*">
-<button onclick="addPhoto()">Add Photo</button>
-<input type="range" id="photoSize" min="50" max="400" value="150">
-<input type="range" id="photoOpacity" min="10" max="100" value="100">
+<h3>🎨 Effects</h3>
+<input type="range" id="blur" min="0" max="10" value="0">
+<input type="range" id="zoom" min="1" max="2" step="0.01" value="1">
 </div>
 
 <div class="panel">
-<h3>🔊 Audio</h3>
-<input type="file" id="audioFile" accept="audio/*">
-<button onclick="addAudio()">Add Audio</button>
-<input type="range" id="audioVolume" min="0" max="1" step="0.01" value="1">
+<h3>🎤 Voice Recording</h3>
+<button onclick="startRec()">Start Recording</button>
+<button onclick="stopRec()">Stop Recording</button>
+</div>
+
+<div class="panel">
+<h3>✍ Auto Subtitles</h3>
+<button onclick="autoSub()">Generate (Demo)</button>
+<div id="subs" style="font-size:12px;color:#ccc"></div>
 </div>
 
 <div class="panel">
@@ -160,7 +89,7 @@ input[type=range],input[type=color]{
 </div>
 
 <div class="panel">
-<h3>📥 Export</h3>
+<h3>📤 Export</h3>
 <select id="quality">
 <option value="1">1080p</option>
 <option value="1.5">2K</option>
@@ -180,99 +109,107 @@ const timeline=document.getElementById("timeline");
 
 let layers=[];
 let history=[],redoStack=[];
-let selectedLayer=null;
+let mediaRecorder,audioChunks=[];
 
 videoFile.onchange=e=>{
-    video.src=URL.createObjectURL(e.target.files[0]);
-    addHistory();
+video.src=URL.createObjectURL(e.target.files[0]);
+addClip("Video");
+save();
 };
 
-function addPhoto(){
-    const file=photoFile.files[0];
-    if(!file)return;
-    const img=new Image();
-    img.src=URL.createObjectURL(file);
-    const layer={type:"photo",img,x:100,y:100,size:150,opacity:1};
-    layers.push(layer);
-    addClip("Photo");
-    addHistory();
-}
-
-function addAudio(){
-    const file=audioFile.files[0];
-    if(!file)return;
-    const audio=new Audio(URL.createObjectURL(file));
-    audio.volume=audioVolume.value;
-    layers.push({type:"audio",audio});
-    addClip("Audio");
-    addHistory();
-}
-
 function addClip(name){
-    const div=document.createElement("div");
-    div.className="clip";
-    div.innerText=name;
-    timeline.appendChild(div);
+const d=document.createElement("div");
+d.className="clip";
+d.innerText=name;
+timeline.appendChild(d);
 }
 
 function splitVideo(){
-    alert("Split logic ULTRA PART-2 میں آئے گا");
+addClip("Split @ "+video.currentTime.toFixed(1));
+alert("Split demo added on timeline");
+save();
 }
 
-function draw(){
-    if(video.paused||video.ended)return;
-    canvas.width=video.videoWidth;
-    canvas.height=video.videoHeight;
-    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+function mergeInfo(){
+alert("Merge happens automatically on export");
+}
 
-    layers.forEach(l=>{
-        if(l.type==="photo"){
-            ctx.globalAlpha=l.opacity;
-            ctx.drawImage(l.img,l.x,l.y,l.size,l.size);
-            ctx.globalAlpha=1;
-        }
-    });
-    requestAnimationFrame(draw);
+blur.oninput=()=>save();
+zoom.oninput=()=>save();
+
+function draw(){
+if(video.paused||video.ended)return;
+canvas.width=video.videoWidth;
+canvas.height=video.videoHeight;
+
+ctx.filter=`blur(${blur.value}px)`;
+ctx.drawImage(
+video,
+(canvas.width*(1-zoom.value))/2,
+(canvas.height*(1-zoom.value))/2,
+canvas.width*zoom.value,
+canvas.height*zoom.value
+);
+ctx.filter="none";
+
+requestAnimationFrame(draw);
 }
 video.onplay=draw;
 
-canvas.onmousedown=e=>{
-    selectedLayer=layers.find(l=>l.type==="photo");
-};
-canvas.onmousemove=e=>{
-    if(selectedLayer){
-        selectedLayer.x=e.offsetX;
-        selectedLayer.y=e.offsetY;
-    }
-};
-canvas.onmouseup=()=>selectedLayer=null;
+/* VOICE RECORD */
+async function startRec(){
+const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+mediaRecorder=new MediaRecorder(stream);
+mediaRecorder.start();
+audioChunks=[];
+mediaRecorder.ondataavailable=e=>audioChunks.push(e.data);
+}
 
-photoSize.oninput=e=>{
-    if(selectedLayer)selectedLayer.size=e.target.value;
+function stopRec(){
+mediaRecorder.stop();
+mediaRecorder.onstop=()=>{
+const audioBlob=new Blob(audioChunks);
+const audio=new Audio(URL.createObjectURL(audioBlob));
+layers.push({type:"voice",audio});
+addClip("Voice");
+save();
 };
-photoOpacity.oninput=e=>{
-    if(selectedLayer)selectedLayer.opacity=e.target.value/100;
-};
+}
 
-function addHistory(){
-    history.push(JSON.stringify(layers));
-    redoStack=[];
+/* AUTO SUBTITLE DEMO */
+function autoSub(){
+document.getElementById("subs").innerText=
+"Hello world (demo subtitles generated)";
+}
+
+/* HISTORY */
+function save(){
+history.push(JSON.stringify({
+blur:blur.value,
+zoom:zoom.value,
+layers
+}));
+redoStack=[];
 }
 function undo(){
-    if(history.length<2)return;
-    redoStack.push(history.pop());
-    layers=JSON.parse(history[history.length-1]);
+if(history.length<2)return;
+redoStack.push(history.pop());
+load(history[history.length-1]);
 }
 function redo(){
-    if(!redoStack.length)return;
-    layers=JSON.parse(redoStack.pop());
+if(!redoStack.length)return;
+load(redoStack.pop());
+}
+function load(state){
+const s=JSON.parse(state);
+blur.value=s.blur;
+zoom.value=s.zoom;
+layers=s.layers;
 }
 
+/* EXPORT */
 function exportVideo(){
-    const scale=document.getElementById("quality").value;
-    canvas.width*=scale;
-    canvas.height*=scale;
-    alert("Export demo – real encoder PART-3");
+alert("ULTRA Export Demo\nReal encoder PART-3");
 }
 </script>
 
