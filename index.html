@@ -1,217 +1,207 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>ULTRA Video Editor</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
 
 <style>
 *{box-sizing:border-box}
-body{
-    margin:0;
-    font-family:Poppins;
-    background:#0b0b0b;
-    color:#fff;
-}
+body{margin:0;font-family:Poppins;background:#0b0b0b;color:#fff}
 
 /* TOP BAR */
 header{
-    height:55px;
-    background:#111;
-    display:flex;
-    align-items:center;
-    padding:0 15px;
-    font-weight:bold;
-    color:#ff2c55;
+height:55px;background:#111;
+display:flex;align-items:center;
+padding:0 15px;font-weight:bold;
+color:#ff2c55
 }
 
-/* MAIN LAYOUT */
-.main{
-    display:flex;
-    height:calc(100vh - 115px);
-}
+/* MAIN */
+.main{display:flex;height:calc(100vh - 115px)}
 
-/* LEFT TOOLBAR */
+/* TOOLS */
 .tools{
-    width:70px;
-    background:#141414;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    padding-top:10px;
+width:70px;background:#141414;
+display:flex;flex-direction:column;
+align-items:center;padding-top:10px
 }
 .tool{
-    width:45px;
-    height:45px;
-    margin:6px 0;
-    background:#222;
-    border-radius:8px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    font-size:12px;
+width:45px;height:45px;margin:6px 0;
+background:#222;border-radius:8px;
+display:flex;align-items:center;
+justify-content:center;cursor:pointer
 }
 .tool:hover{background:#ff2c55}
 
-/* PREVIEW AREA */
+/* PREVIEW */
 .preview{
-    flex:1;
-    background:#000;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    position:relative;
+flex:1;background:#000;
+display:flex;align-items:center;
+justify-content:center;position:relative
 }
-canvas{
-    background:#000;
-    max-width:100%;
-    max-height:100%;
-    border-radius:10px;
-}
+canvas{background:#000;border-radius:10px}
 
-/* RIGHT PANEL */
+/* PANEL */
 .panel{
-    width:260px;
-    background:#141414;
-    padding:12px;
+width:260px;background:#141414;
+padding:12px
 }
-.panel h3{
-    margin-top:0;
-    color:#ff2c55;
+.panel h3{margin-top:0;color:#ff2c55}
+.panel button,input{
+width:100%;margin-top:6px;
+padding:6px;border:none;border-radius:6px
 }
-.panel input, .panel button{
-    width:100%;
-    margin-top:8px;
-    padding:6px;
-    border:none;
-    border-radius:6px;
-}
-.panel button{
-    background:#ff2c55;
-    color:#fff;
-    cursor:pointer;
-}
+.panel button{background:#ff2c55;color:#fff;cursor:pointer}
 
 /* TIMELINE */
 .timeline{
-    height:60px;
-    background:#111;
-    display:flex;
-    align-items:center;
-    padding:0 10px;
-    font-size:13px;
+height:60px;background:#111;
+display:flex;align-items:center;
+padding:0 10px;font-size:13px
 }
 .track{
-    background:#222;
-    height:30px;
-    width:200px;
-    margin-right:10px;
-    border-radius:6px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+background:#222;height:30px;
+width:160px;margin-right:8px;
+border-radius:6px;
+display:flex;align-items:center;
+justify-content:center;cursor:pointer
 }
+.active{outline:2px solid #ff2c55}
 </style>
 </head>
 
 <body>
 
-<header>ULTRA Video Editor (PART 1)</header>
+<header>ULTRA Video Editor – PART 2</header>
 
 <div class="main">
 
-<!-- LEFT TOOLS -->
+<!-- TOOLS -->
 <div class="tools">
-    <div class="tool" onclick="openPanel('video')">🎥</div>
-    <div class="tool" onclick="openPanel('layer')">🧱</div>
-    <div class="tool" onclick="openPanel('text')">🔤</div>
-    <div class="tool" onclick="openPanel('audio')">🎵</div>
-    <div class="tool" onclick="openPanel('effects')">✨</div>
-    <div class="tool" onclick="openPanel('filters')">🎨</div>
-    <div class="tool" onclick="alert('Undo (PART 5)')">↩️</div>
-    <div class="tool" onclick="alert('Redo (PART 5)')">↪️</div>
-    <div class="tool" onclick="alert('Split & Merge (PART 2)')">✂️</div>
-    <div class="tool" onclick="alert('Canvas Sizes (PART 5)')">📐</div>
-    <div class="tool" onclick="alert('Export (PART 5)')">📤</div>
+<div class="tool" onclick="openPanel('video')">🎥</div>
+<div class="tool" onclick="openPanel('layer')">🧱</div>
+<div class="tool" onclick="openPanel('text')">🔤</div>
+<div class="tool" onclick="openPanel('effects')">✨</div>
+<div class="tool" onclick="alert('Audio PART 3')">🎵</div>
+<div class="tool" onclick="alert('Export PART 5')">📤</div>
 </div>
 
 <!-- PREVIEW -->
 <div class="preview">
-    <canvas id="canvas" width="720" height="405"></canvas>
+<canvas id="canvas" width="720" height="405"></canvas>
 </div>
 
-<!-- RIGHT PANEL -->
+<!-- PANEL -->
 <div class="panel" id="panel">
-    <h3>Welcome</h3>
-    <p>Select any tool</p>
+<h3>Welcome</h3>
+Select Tool
 </div>
 
 </div>
 
 <!-- TIMELINE -->
-<div class="timeline">
-    <div class="track">Video Track</div>
-    <div class="track">Text Track</div>
-</div>
+<div class="timeline" id="timeline"></div>
 
 <script>
-const panel = document.getElementById("panel");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const panel=document.getElementById("panel");
+const timeline=document.getElementById("timeline");
 
-let textLayer = "";
+let layers=[];
+let activeLayer=null;
 
-function openPanel(type){
-    if(type==="text"){
-        panel.innerHTML = `
-        <h3>Text</h3>
-        <input id="txt" placeholder="Enter text">
-        <button onclick="addText()">Add Text</button>
-        `;
-    }
-    else if(type==="effects"){
-        panel.innerHTML = `
-        <h3>Effects</h3>
-        <button onclick="setEffect('blur')">Blur</button>
-        <button onclick="setEffect('bright')">Brightness</button>
-        <button onclick="setEffect('zoom')">Zoom</button>
-        `;
-    }
-    else{
-        panel.innerHTML = `<h3>${type}</h3><p>Settings coming next parts</p>`;
-    }
-}
-
-function addText(){
-    textLayer = document.getElementById("txt").value;
-    draw();
-}
-
-function setEffect(type){
-    if(type==="blur") ctx.filter="blur(3px)";
-    if(type==="bright") ctx.filter="brightness(140%)";
-    if(type==="zoom"){
-        ctx.scale(1.1,1.1);
-    }
-    draw();
-}
-
+/* DRAW */
 function draw(){
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle="black";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-
-    if(textLayer){
-        ctx.fillStyle="white";
-        ctx.font="40px Poppins";
-        ctx.fillText(textLayer,50,200);
-    }
+ctx.clearRect(0,0,canvas.width,canvas.height);
+layers.forEach(l=>{
+if(l.type==="text"){
+ctx.fillStyle="white";
+ctx.font="30px Poppins";
+ctx.fillText(l.text,l.x,l.y);
 }
+});
+}
+
+/* PANEL */
+function openPanel(type){
+if(type==="text"){
+panel.innerHTML=`
+<h3>Text Layer</h3>
+<input id="txt" placeholder="Enter text">
+<button onclick="addText()">Add</button>
+`;
+}
+if(type==="layer"){
+panel.innerHTML=`
+<h3>Layer Control</h3>
+<button onclick="deleteLayer()">Delete Active</button>
+`;
+}
+if(type==="effects"){
+panel.innerHTML=`
+<h3>Effects</h3>
+<button onclick="applyEffect('blur')">Blur</button>
+<button onclick="applyEffect('bright')">Brightness</button>
+`;
+}
+}
+
+/* ADD TEXT */
+function addText(){
+let txt=document.getElementById("txt").value;
+let layer={
+id:Date.now(),
+type:"text",
+text:txt,
+x:100,y:200,
+effect:null
+};
+layers.push(layer);
+setActive(layer.id);
+refreshTimeline();
+draw();
+}
+
+/* EFFECT */
+function applyEffect(type){
+if(!activeLayer) return;
+activeLayer.effect=type;
+ctx.filter= type==="blur"?"blur(3px)":"brightness(140%)";
+draw();
+ctx.filter="none";
+}
+
+/* TIMELINE */
+function refreshTimeline(){
+timeline.innerHTML="";
+layers.forEach(l=>{
+let div=document.createElement("div");
+div.className="track"+(l.id===activeLayer?.id?" active":"");
+div.innerText=l.type;
+div.onclick=()=>setActive(l.id);
+timeline.appendChild(div);
+});
+}
+
+function setActive(id){
+activeLayer=layers.find(l=>l.id===id);
+refreshTimeline();
+}
+
+/* DELETE */
+function deleteLayer(){
+if(!activeLayer)return;
+layers=layers.filter(l=>l.id!==activeLayer.id);
+activeLayer=null;
+refreshTimeline();
+draw();
+}
+
 draw();
 </script>
 
 </body>
 </html>
+
