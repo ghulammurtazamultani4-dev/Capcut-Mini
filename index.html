@@ -2,362 +2,216 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>PRO Video Editor – Ghulam Murtaza</title>
+<title>ULTRA Video Editor</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
 
 <style>
 *{box-sizing:border-box}
 body{
-margin:0;
-background:#0b0b0b;
-color:#fff;
-font-family:Arial,Helvetica,sans-serif;
-overflow:hidden;
+    margin:0;
+    font-family:Poppins;
+    background:#0b0b0b;
+    color:#fff;
 }
+
+/* TOP BAR */
 header{
-height:50px;
-background:#111;
-display:flex;
-align-items:center;
-padding:0 15px;
-font-weight:bold;
-color:#ff2c55;
+    height:55px;
+    background:#111;
+    display:flex;
+    align-items:center;
+    padding:0 15px;
+    font-weight:bold;
+    color:#ff2c55;
 }
 
-/* LAYOUT */
-.app{
-display:grid;
-grid-template-columns:70px 1fr;
-grid-template-rows:1fr 140px;
-height:calc(100vh - 50px);
+/* MAIN LAYOUT */
+.main{
+    display:flex;
+    height:calc(100vh - 115px);
 }
 
-/* TOOLBAR */
-.toolbar{
-grid-row:1/3;
-background:#111;
-display:flex;
-flex-direction:column;
-gap:6px;
-padding:6px;
+/* LEFT TOOLBAR */
+.tools{
+    width:70px;
+    background:#141414;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:10px;
 }
 .tool{
-background:#1a1a1a;
-border:none;
-color:#fff;
-padding:8px;
-border-radius:6px;
-cursor:pointer;
-font-size:11px;
+    width:45px;
+    height:45px;
+    margin:6px 0;
+    background:#222;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-size:12px;
 }
-.tool:hover,.tool.active{
-background:#ff2c55;
-}
+.tool:hover{background:#ff2c55}
 
-/* PREVIEW */
+/* PREVIEW AREA */
 .preview{
-background:#000;
-display:flex;
-align-items:center;
-justify-content:center;
-position:relative;
+    flex:1;
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
 }
-video,canvas{
-max-width:100%;
-max-height:100%;
+canvas{
+    background:#000;
+    max-width:100%;
+    max-height:100%;
+    border-radius:10px;
 }
 
-/* SETTINGS PANEL */
+/* RIGHT PANEL */
 .panel{
-position:absolute;
-right:10px;
-top:10px;
-width:260px;
-background:#131313;
-padding:10px;
-border-radius:8px;
-display:none;
+    width:260px;
+    background:#141414;
+    padding:12px;
 }
 .panel h3{
-margin:0 0 8px;
-font-size:13px;
-color:#ff2c55;
+    margin-top:0;
+    color:#ff2c55;
 }
-.panel input,.panel select,.panel button{
-width:100%;
-margin-top:6px;
-padding:6px;
-border:none;
-border-radius:5px;
+.panel input, .panel button{
+    width:100%;
+    margin-top:8px;
+    padding:6px;
+    border:none;
+    border-radius:6px;
 }
 .panel button{
-background:#ff2c55;
-color:#fff;
-cursor:pointer;
+    background:#ff2c55;
+    color:#fff;
+    cursor:pointer;
 }
 
 /* TIMELINE */
 .timeline{
-grid-column:2;
-background:#111;
-padding:10px;
-overflow-x:auto;
-display:flex;
-gap:6px;
+    height:60px;
+    background:#111;
+    display:flex;
+    align-items:center;
+    padding:0 10px;
+    font-size:13px;
 }
-.clip{
-background:#333;
-padding:6px 10px;
-border-radius:6px;
-font-size:12px;
-white-space:nowrap;
-}
-.clip.active{
-outline:2px solid #ff2c55;
+.track{
+    background:#222;
+    height:30px;
+    width:200px;
+    margin-right:10px;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 </style>
 </head>
 
 <body>
 
-<header>PRO VIDEO EDITOR</header>
+<header>ULTRA Video Editor (PART 1)</header>
 
-<div class="app">
+<div class="main">
 
-<!-- TOOLBAR -->
-<div class="toolbar">
-<button class="tool" onclick="openPanel('videoPanel')">Video</button>
-<button class="tool" onclick="openPanel('layerPanel')">Layer</button>
-<button class="tool" onclick="openPanel('editPanel')">Edit</button>
-<button class="tool" onclick="openPanel('audioPanel')">Audio</button>
-<button class="tool" onclick="openPanel('audioEditPanel')">Audio Set</button>
-<button class="tool" onclick="openPanel('emojiPanel')">Emoji</button>
-<button class="tool" onclick="openPanel('filterPanel')">Filters</button>
-<button class="tool" onclick="undo()">Undo</button>
-<button class="tool" onclick="openPanel('effectPanel')">Effects</button>
-<button class="tool" onclick="splitClip()">Split</button>
-<button class="tool" onclick="openPanel('canvasPanel')">Canvas</button>
-<button class="tool" onclick="openPanel('exportPanel')">Export</button>
+<!-- LEFT TOOLS -->
+<div class="tools">
+    <div class="tool" onclick="openPanel('video')">🎥</div>
+    <div class="tool" onclick="openPanel('layer')">🧱</div>
+    <div class="tool" onclick="openPanel('text')">🔤</div>
+    <div class="tool" onclick="openPanel('audio')">🎵</div>
+    <div class="tool" onclick="openPanel('effects')">✨</div>
+    <div class="tool" onclick="openPanel('filters')">🎨</div>
+    <div class="tool" onclick="alert('Undo (PART 5)')">↩️</div>
+    <div class="tool" onclick="alert('Redo (PART 5)')">↪️</div>
+    <div class="tool" onclick="alert('Split & Merge (PART 2)')">✂️</div>
+    <div class="tool" onclick="alert('Canvas Sizes (PART 5)')">📐</div>
+    <div class="tool" onclick="alert('Export (PART 5)')">📤</div>
 </div>
 
 <!-- PREVIEW -->
 <div class="preview">
-<video id="video" controls></video>
-<canvas id="canvas"></canvas>
-
-<!-- PANELS -->
-
-<div class="panel" id="videoPanel">
-<h3>Upload Video</h3>
-<input type="file" id="videoFile" accept="video/*">
-<label>Brightness</label>
-<input type="range" id="brightness" min="0" max="200" value="100">
-<label>Contrast</label>
-<input type="range" id="contrast" min="0" max="200" value="100">
-<label>Blur</label>
-<input type="range" id="blur" min="0" max="10" value="0">
+    <canvas id="canvas" width="720" height="405"></canvas>
 </div>
 
-<div class="panel" id="layerPanel">
-<h3>Upload Layer</h3>
-<input type="file" id="photoFile" accept="image/*">
-<button onclick="addPhoto()">Add Photo</button>
-</div>
-
-<div class="panel" id="editPanel">
-<h3>Edit Layer</h3>
-<label>Size</label>
-<input type="range" id="size" min="50" max="400" value="150">
-<label>Opacity</label>
-<input type="range" id="opacity" min="10" max="100" value="100">
-</div>
-
-<div class="panel" id="audioPanel">
-<h3>Upload Audio</h3>
-<input type="file" id="audioFile" accept="audio/*">
-<button onclick="addAudio()">Add Audio</button>
-</div>
-
-<div class="panel" id="audioEditPanel">
-<h3>Audio Settings</h3>
-<label>Volume</label>
-<input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-<button onclick="alert('Magic Voice – demo')">Magic Voice</button>
-<button onclick="alert('Noise Remove – demo')">Noise Remove</button>
-</div>
-
-<div class="panel" id="emojiPanel">
-<h3>Emojis</h3>
-<button onclick="addEmoji('😀')">😀</button>
-<button onclick="addEmoji('🔥')">🔥</button>
-<button onclick="addEmoji('❤️')">❤️</button>
-</div>
-
-<div class="panel" id="filterPanel">
-<h3>Filters</h3>
-<button onclick="setFilter('grayscale(1)')">B&W</button>
-<button onclick="setFilter('sepia(1)')">Warm</button>
-<button onclick="setFilter('contrast(1.4)')">Cinematic</button>
-</div>
-
-<div class="panel" id="effectPanel">
-<h3>Effects</h3>
-<button onclick="zoom=1.2">Zoom</button>
-<button onclick="zoom=1">Normal</button>
-</div>
-
-<div class="panel" id="canvasPanel">
-<h3>Canvas Size</h3>
-<button onclick="setCanvas(16,9)">YouTube</button>
-<button onclick="setCanvas(9,16)">TikTok</button>
-<button onclick="setCanvas(1,1)">Instagram</button>
-</div>
-
-<div class="panel" id="exportPanel">
-<h3>Export</h3>
-<select id="quality">
-<option value="0.5">480p</option>
-<option value="0.75">720p</option>
-<option value="1">1080p</option>
-<option value="1.5">2K</option>
-<option value="2">4K</option>
-</select>
-<button onclick="exportVideo()">Export</button>
+<!-- RIGHT PANEL -->
+<div class="panel" id="panel">
+    <h3>Welcome</h3>
+    <p>Select any tool</p>
 </div>
 
 </div>
 
 <!-- TIMELINE -->
-<div class="timeline" id="timeline"></div>
-
+<div class="timeline">
+    <div class="track">Video Track</div>
+    <div class="track">Text Track</div>
 </div>
 
 <script>
-const video=document.getElementById("video");
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
+const panel = document.getElementById("panel");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-let layers=[],history=[],redoStack=[];
-let zoom=1,filter="none";
+let textLayer = "";
 
-videoFile.onchange=e=>{
-video.src=URL.createObjectURL(e.target.files[0]);
-addClip("Video");
-save();
-};
-
-function openPanel(id){
-document.querySelectorAll(".panel").forEach(p=>p.style.display="none");
-document.getElementById(id).style.display="block";
+function openPanel(type){
+    if(type==="text"){
+        panel.innerHTML = `
+        <h3>Text</h3>
+        <input id="txt" placeholder="Enter text">
+        <button onclick="addText()">Add Text</button>
+        `;
+    }
+    else if(type==="effects"){
+        panel.innerHTML = `
+        <h3>Effects</h3>
+        <button onclick="setEffect('blur')">Blur</button>
+        <button onclick="setEffect('bright')">Brightness</button>
+        <button onclick="setEffect('zoom')">Zoom</button>
+        `;
+    }
+    else{
+        panel.innerHTML = `<h3>${type}</h3><p>Settings coming next parts</p>`;
+    }
 }
 
-function addClip(name){
-const d=document.createElement("div");
-d.className="clip";
-d.innerText=name;
-timeline.appendChild(d);
+function addText(){
+    textLayer = document.getElementById("txt").value;
+    draw();
 }
 
-function addPhoto(){
-const f=photoFile.files[0];
-if(!f)return;
-const img=new Image();
-img.src=URL.createObjectURL(f);
-layers.push({type:"photo",img,x:100,y:100,size:150,opacity:1});
-addClip("Photo");
-save();
-}
-
-function addEmoji(e){
-layers.push({type:"emoji",text:e,x:200,y:200});
-addClip("Emoji");
-save();
-}
-
-function addAudio(){
-const f=audioFile.files[0];
-if(!f)return;
-const a=new Audio(URL.createObjectURL(f));
-a.volume=volume.value;
-a.play();
-layers.push({type:"audio",audio:a});
-addClip("Audio");
-save();
-}
-
-function setFilter(f){filter=f;save();}
-
-function setCanvas(w,h){
-canvas.width=video.videoWidth*(w/h);
-canvas.height=video.videoHeight;
+function setEffect(type){
+    if(type==="blur") ctx.filter="blur(3px)";
+    if(type==="bright") ctx.filter="brightness(140%)";
+    if(type==="zoom"){
+        ctx.scale(1.1,1.1);
+    }
+    draw();
 }
 
 function draw(){
-if(video.paused||video.ended)return;
-canvas.width=video.videoWidth;
-canvas.height=video.videoHeight;
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
 
-ctx.filter=`brightness(${brightness.value}%) contrast(${contrast.value}%) blur(${blur.value}px) ${filter}`;
-ctx.drawImage(
-video,
-(canvas.width*(1-zoom))/2,
-(canvas.height*(1-zoom))/2,
-canvas.width*zoom,
-canvas.height*zoom
-);
-ctx.filter="none";
-
-layers.forEach(l=>{
-if(l.type==="photo"){
-ctx.globalAlpha=l.opacity;
-ctx.drawImage(l.img,l.x,l.y,l.size,l.size);
-ctx.globalAlpha=1;
+    if(textLayer){
+        ctx.fillStyle="white";
+        ctx.font="40px Poppins";
+        ctx.fillText(textLayer,50,200);
+    }
 }
-if(l.type==="emoji"){
-ctx.font="40px serif";
-ctx.fillText(l.text,l.x,l.y);
-}
-});
-
-requestAnimationFrame(draw);
-}
-video.onplay=draw;
-
-canvas.onmousemove=e=>{
-if(layers.length){
-const l=layers[layers.length-1];
-l.x=e.offsetX;
-l.y=e.offsetY;
-}
-};
-
-size.oninput=e=>{
-const l=layers[layers.length-1];
-if(l)l.size=e.target.value;
-};
-opacity.oninput=e=>{
-const l=layers[layers.length-1];
-if(l)l.opacity=e.target.value/100;
-};
-
-function splitClip(){
-alert("Split demo – timeline logic next upgrade");
-}
-
-function save(){
-history.push(JSON.stringify(layers));
-redoStack=[];
-}
-function undo(){
-if(history.length<2)return;
-redoStack.push(history.pop());
-layers=JSON.parse(history[history.length-1]);
-}
-
-function exportVideo(){
-alert("Export demo\nCanvas based quality");
-}
+draw();
 </script>
 
 </body>
 </html>
-
