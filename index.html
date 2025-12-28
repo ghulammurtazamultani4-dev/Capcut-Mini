@@ -8,99 +8,49 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Poppins;background:#0b0b0b;color:#fff}
-
-/* TOP BAR */
-header{
-height:55px;background:#111;
-display:flex;align-items:center;
-padding:0 15px;font-weight:bold;
-color:#ff2c55
-}
-
-/* MAIN */
+header{height:55px;background:#111;display:flex;align-items:center;padding:0 15px;color:#ff2c55;font-weight:bold}
 .main{display:flex;height:calc(100vh - 115px)}
-
-/* TOOLS */
-.tools{
-width:70px;background:#141414;
-display:flex;flex-direction:column;
-align-items:center;padding-top:10px
-}
-.tool{
-width:45px;height:45px;margin:6px 0;
-background:#222;border-radius:8px;
-display:flex;align-items:center;
-justify-content:center;cursor:pointer
-}
+.tools{width:70px;background:#141414;display:flex;flex-direction:column;align-items:center;padding-top:10px}
+.tool{width:45px;height:45px;margin:6px 0;background:#222;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .tool:hover{background:#ff2c55}
-
-/* PREVIEW */
-.preview{
-flex:1;background:#000;
-display:flex;align-items:center;
-justify-content:center;position:relative
-}
+.preview{flex:1;background:#000;display:flex;align-items:center;justify-content:center}
 canvas{background:#000;border-radius:10px}
-
-/* PANEL */
-.panel{
-width:260px;background:#141414;
-padding:12px
-}
+.panel{width:280px;background:#141414;padding:12px}
 .panel h3{margin-top:0;color:#ff2c55}
-.panel button,input{
-width:100%;margin-top:6px;
-padding:6px;border:none;border-radius:6px
-}
+.panel button,input,select{width:100%;margin-top:6px;padding:6px;border:none;border-radius:6px}
 .panel button{background:#ff2c55;color:#fff;cursor:pointer}
-
-/* TIMELINE */
-.timeline{
-height:60px;background:#111;
-display:flex;align-items:center;
-padding:0 10px;font-size:13px
-}
-.track{
-background:#222;height:30px;
-width:160px;margin-right:8px;
-border-radius:6px;
-display:flex;align-items:center;
-justify-content:center;cursor:pointer
-}
+.timeline{height:60px;background:#111;display:flex;align-items:center;padding:0 10px}
+.track{background:#222;height:30px;width:140px;margin-right:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .active{outline:2px solid #ff2c55}
 </style>
 </head>
 
 <body>
 
-<header>ULTRA Video Editor – PART 2</header>
+<header>ULTRA Video Editor – PART 3</header>
 
 <div class="main">
 
-<!-- TOOLS -->
 <div class="tools">
-<div class="tool" onclick="openPanel('video')">🎥</div>
-<div class="tool" onclick="openPanel('layer')">🧱</div>
 <div class="tool" onclick="openPanel('text')">🔤</div>
-<div class="tool" onclick="openPanel('effects')">✨</div>
-<div class="tool" onclick="alert('Audio PART 3')">🎵</div>
-<div class="tool" onclick="alert('Export PART 5')">📤</div>
+<div class="tool" onclick="openPanel('audio')">🎵</div>
+<div class="tool" onclick="openPanel('filters')">🎨</div>
+<div class="tool" onclick="splitLayer()">✂️</div>
+<div class="tool" onclick="undo()">↩️</div>
+<div class="tool" onclick="redo()">↪️</div>
 </div>
 
-<!-- PREVIEW -->
 <div class="preview">
 <canvas id="canvas" width="720" height="405"></canvas>
 </div>
 
-<!-- PANEL -->
 <div class="panel" id="panel">
 <h3>Welcome</h3>
-Select Tool
+Select tool
 </div>
 
 </div>
 
-<!-- TIMELINE -->
 <div class="timeline" id="timeline"></div>
 
 <script>
@@ -111,15 +61,26 @@ const timeline=document.getElementById("timeline");
 
 let layers=[];
 let activeLayer=null;
+let history=[];
+let redoStack=[];
+let audioPlayer=new Audio();
+
+/* SAVE STATE */
+function saveState(){
+history.push(JSON.stringify(layers));
+redoStack=[];
+}
 
 /* DRAW */
 function draw(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 layers.forEach(l=>{
 if(l.type==="text"){
+ctx.filter=l.filter||"none";
 ctx.fillStyle="white";
-ctx.font="30px Poppins";
+ctx.font="32px Poppins";
 ctx.fillText(l.text,l.x,l.y);
+ctx.filter="none";
 }
 });
 }
@@ -128,77 +89,99 @@ ctx.fillText(l.text,l.x,l.y);
 function openPanel(type){
 if(type==="text"){
 panel.innerHTML=`
-<h3>Text Layer</h3>
+<h3>Text</h3>
 <input id="txt" placeholder="Enter text">
-<button onclick="addText()">Add</button>
+<button onclick="addText()">Add Text</button>
 `;
 }
-if(type==="layer"){
+if(type==="audio"){
 panel.innerHTML=`
-<h3>Layer Control</h3>
-<button onclick="deleteLayer()">Delete Active</button>
+<h3>Audio</h3>
+<input type="file" accept="audio/*" onchange="loadAudio(this)">
+<button onclick="audioPlayer.play()">Play</button>
+<button onclick="audioPlayer.pause()">Pause</button>
+<input type="range" min="0" max="1" step="0.1" onchange="audioPlayer.volume=this.value">
+<button onclick="alert('Noise Removed (Simulated)')">Noise Remove</button>
+<button onclick="alert('Magic Voice (Simulated)')">Magic Voice</button>
 `;
 }
-if(type==="effects"){
+if(type==="filters"){
 panel.innerHTML=`
-<h3>Effects</h3>
-<button onclick="applyEffect('blur')">Blur</button>
-<button onclick="applyEffect('bright')">Brightness</button>
+<h3>Filters</h3>
+<button onclick="setFilter('grayscale(100%)')">B&W</button>
+<button onclick="setFilter('sepia(80%)')">Vintage</button>
+<button onclick="setFilter('brightness(130%)')">Bright</button>
+<button onclick="setFilter('blur(3px)')">Blur</button>
 `;
 }
 }
 
-/* ADD TEXT */
+/* TEXT */
 function addText(){
+saveState();
 let txt=document.getElementById("txt").value;
-let layer={
-id:Date.now(),
-type:"text",
-text:txt,
-x:100,y:200,
-effect:null
-};
+let layer={id:Date.now(),type:"text",text:txt,x:100,y:200,filter:"none"};
 layers.push(layer);
 setActive(layer.id);
 refreshTimeline();
 draw();
 }
 
-/* EFFECT */
-function applyEffect(type){
-if(!activeLayer) return;
-activeLayer.effect=type;
-ctx.filter= type==="blur"?"blur(3px)":"brightness(140%)";
+/* AUDIO */
+function loadAudio(input){
+audioPlayer.src=URL.createObjectURL(input.files[0]);
+}
+
+/* FILTER */
+function setFilter(f){
+if(!activeLayer)return;
+saveState();
+activeLayer.filter=f;
 draw();
-ctx.filter="none";
+}
+
+/* SPLIT */
+function splitLayer(){
+if(!activeLayer)return;
+saveState();
+let copy={...activeLayer,id:Date.now()};
+layers.push(copy);
+refreshTimeline();
+draw();
+}
+
+/* UNDO / REDO */
+function undo(){
+if(history.length===0)return;
+redoStack.push(JSON.stringify(layers));
+layers=JSON.parse(history.pop());
+activeLayer=null;
+refreshTimeline();
+draw();
+}
+function redo(){
+if(redoStack.length===0)return;
+history.push(JSON.stringify(layers));
+layers=JSON.parse(redoStack.pop());
+refreshTimeline();
+draw();
 }
 
 /* TIMELINE */
 function refreshTimeline(){
 timeline.innerHTML="";
 layers.forEach(l=>{
-let div=document.createElement("div");
-div.className="track"+(l.id===activeLayer?.id?" active":"");
-div.innerText=l.type;
-div.onclick=()=>setActive(l.id);
-timeline.appendChild(div);
+let d=document.createElement("div");
+d.className="track"+(l.id===activeLayer?.id?" active":"");
+d.innerText=l.type;
+d.onclick=()=>setActive(l.id);
+timeline.appendChild(d);
 });
 }
-
 function setActive(id){
 activeLayer=layers.find(l=>l.id===id);
 refreshTimeline();
 }
-
-/* DELETE */
-function deleteLayer(){
-if(!activeLayer)return;
-layers=layers.filter(l=>l.id!==activeLayer.id);
-activeLayer=null;
-refreshTimeline();
-draw();
-}
-
 draw();
 </script>
 
