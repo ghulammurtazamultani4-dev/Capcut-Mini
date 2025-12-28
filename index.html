@@ -13,9 +13,9 @@ header{height:55px;background:#111;display:flex;align-items:center;padding:0 15p
 .tools{width:70px;background:#141414;display:flex;flex-direction:column;align-items:center;padding-top:10px}
 .tool{width:45px;height:45px;margin:6px 0;background:#222;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .tool:hover{background:#ff2c55}
-.preview{flex:1;background:#000;display:flex;align-items:center;justify-content:center}
-canvas{background:#000;border-radius:10px}
-.panel{width:280px;background:#141414;padding:12px}
+.preview{flex:1;background:#000;display:flex;align-items:center;justify-content:center;position:relative}
+canvas{background:#000;border-radius:10px;cursor:move}
+.panel{width:300px;background:#141414;padding:12px}
 .panel h3{margin-top:0;color:#ff2c55}
 .panel button,input,select{width:100%;margin-top:6px;padding:6px;border:none;border-radius:6px}
 .panel button{background:#ff2c55;color:#fff;cursor:pointer}
@@ -27,23 +27,25 @@ canvas{background:#000;border-radius:10px}
 
 <body>
 
-<header>ULTRA Video Editor – PART 3</header>
+<header>ULTRA Video Editor – PART 4</header>
 
 <div class="main">
 
+<!-- TOOLS -->
 <div class="tools">
+<div class="tool" onclick="openPanel('video')">🎥</div>
 <div class="tool" onclick="openPanel('text')">🔤</div>
-<div class="tool" onclick="openPanel('audio')">🎵</div>
-<div class="tool" onclick="openPanel('filters')">🎨</div>
-<div class="tool" onclick="splitLayer()">✂️</div>
-<div class="tool" onclick="undo()">↩️</div>
-<div class="tool" onclick="redo()">↪️</div>
+<div class="tool" onclick="openPanel('canvas')">📐</div>
+<div class="tool" onclick="openPanel('blur')">🌫️</div>
 </div>
 
+<!-- PREVIEW -->
 <div class="preview">
 <canvas id="canvas" width="720" height="405"></canvas>
+<video id="video" style="display:none"></video>
 </div>
 
+<!-- PANEL -->
 <div class="panel" id="panel">
 <h3>Welcome</h3>
 Select tool
@@ -58,35 +60,35 @@ const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
 const panel=document.getElementById("panel");
 const timeline=document.getElementById("timeline");
+const video=document.getElementById("video");
 
 let layers=[];
 let activeLayer=null;
-let history=[];
-let redoStack=[];
-let audioPlayer=new Audio();
-
-/* SAVE STATE */
-function saveState(){
-history.push(JSON.stringify(layers));
-redoStack=[];
-}
+let drag=false,offsetX=0,offsetY=0;
 
 /* DRAW */
 function draw(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 layers.forEach(l=>{
+if(l.type==="video" && l.ready){
+ctx.drawImage(video,l.x,l.y,l.w,l.h);
+}
 if(l.type==="text"){
-ctx.filter=l.filter||"none";
 ctx.fillStyle="white";
 ctx.font="32px Poppins";
 ctx.fillText(l.text,l.x,l.y);
-ctx.filter="none";
 }
 });
 }
 
 /* PANEL */
 function openPanel(type){
+if(type==="video"){
+panel.innerHTML=`
+<h3>Video</h3>
+<input type="file" accept="video/*" onchange="loadVideo(this)">
+`;
+}
 if(type==="text"){
 panel.innerHTML=`
 <h3>Text</h3>
@@ -94,78 +96,72 @@ panel.innerHTML=`
 <button onclick="addText()">Add Text</button>
 `;
 }
-if(type==="audio"){
+if(type==="canvas"){
 panel.innerHTML=`
-<h3>Audio</h3>
-<input type="file" accept="audio/*" onchange="loadAudio(this)">
-<button onclick="audioPlayer.play()">Play</button>
-<button onclick="audioPlayer.pause()">Pause</button>
-<input type="range" min="0" max="1" step="0.1" onchange="audioPlayer.volume=this.value">
-<button onclick="alert('Noise Removed (Simulated)')">Noise Remove</button>
-<button onclick="alert('Magic Voice (Simulated)')">Magic Voice</button>
+<h3>Canvas Size</h3>
+<button onclick="setCanvas(1280,720)">YouTube 16:9</button>
+<button onclick="setCanvas(720,1280)">TikTok 9:16</button>
+<button onclick="setCanvas(800,800)">Square 1:1</button>
 `;
 }
-if(type==="filters"){
+if(type==="blur"){
 panel.innerHTML=`
-<h3>Filters</h3>
-<button onclick="setFilter('grayscale(100%)')">B&W</button>
-<button onclick="setFilter('sepia(80%)')">Vintage</button>
-<button onclick="setFilter('brightness(130%)')">Bright</button>
-<button onclick="setFilter('blur(3px)')">Blur</button>
+<h3>Background</h3>
+<button onclick="ctx.filter='blur(6px)';draw()">Blur BG</button>
+<button onclick="ctx.filter='none';draw()">Remove Blur</button>
 `;
 }
 }
 
+/* VIDEO */
+function loadVideo(input){
+video.src=URL.createObjectURL(input.files[0]);
+video.onloadeddata=()=>{
+let layer={
+id:Date.now(),
+type:"video",
+x:50,y:50,w:300,h:170,
+ready:true
+};
+layers.push(layer);
+setActive(layer.id);
+refreshTimeline();
+draw();
+};
+video.play();
+}
+
 /* TEXT */
 function addText(){
-saveState();
 let txt=document.getElementById("txt").value;
-let layer={id:Date.now(),type:"text",text:txt,x:100,y:200,filter:"none"};
+let layer={id:Date.now(),type:"text",text:txt,x:100,y:200};
 layers.push(layer);
 setActive(layer.id);
 refreshTimeline();
 draw();
 }
 
-/* AUDIO */
-function loadAudio(input){
-audioPlayer.src=URL.createObjectURL(input.files[0]);
+/* CANVAS */
+function setCanvas(w,h){
+canvas.width=w;
+canvas.height=h;
+draw();
 }
 
-/* FILTER */
-function setFilter(f){
+/* DRAG */
+canvas.onmousedown=e=>{
 if(!activeLayer)return;
-saveState();
-activeLayer.filter=f;
+drag=true;
+offsetX=e.offsetX-activeLayer.x;
+offsetY=e.offsetY-activeLayer.y;
+};
+canvas.onmousemove=e=>{
+if(!drag || !activeLayer)return;
+activeLayer.x=e.offsetX-offsetX;
+activeLayer.y=e.offsetY-offsetY;
 draw();
-}
-
-/* SPLIT */
-function splitLayer(){
-if(!activeLayer)return;
-saveState();
-let copy={...activeLayer,id:Date.now()};
-layers.push(copy);
-refreshTimeline();
-draw();
-}
-
-/* UNDO / REDO */
-function undo(){
-if(history.length===0)return;
-redoStack.push(JSON.stringify(layers));
-layers=JSON.parse(history.pop());
-activeLayer=null;
-refreshTimeline();
-draw();
-}
-function redo(){
-if(redoStack.length===0)return;
-history.push(JSON.stringify(layers));
-layers=JSON.parse(redoStack.pop());
-refreshTimeline();
-draw();
-}
+};
+canvas.onmouseup=()=>drag=false;
 
 /* TIMELINE */
 function refreshTimeline(){
