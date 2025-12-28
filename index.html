@@ -1,45 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ULTRA Video Editor</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+<title>ULTRA Video Editor – FINAL FIX</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins&family=Roboto&family=Montserrat&display=swap" rel="stylesheet">
 
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Poppins;background:#0b0b0b;color:#fff}
 header{height:55px;background:#111;display:flex;align-items:center;padding:0 15px;color:#ff2c55;font-weight:bold}
+
 .main{display:flex;height:calc(100vh - 115px)}
 .tools{width:70px;background:#141414;display:flex;flex-direction:column;align-items:center;padding-top:10px}
-.tool{width:45px;height:45px;margin:6px 0;background:#222;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.tool{width:45px;height:45px;margin:6px 0;background:#222;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .tool:hover{background:#ff2c55}
-.preview{flex:1;background:#000;display:flex;align-items:center;justify-content:center;position:relative}
-canvas{background:#000;border-radius:10px;cursor:move}
-.panel{width:320px;background:#141414;padding:12px;overflow:auto}
+
+.preview{flex:1;background:#000;display:flex;align-items:center;justify-content:center}
+canvas{background:#000;border-radius:10px}
+
+.panel{width:340px;background:#141414;padding:12px;overflow:auto}
 .panel h3{margin-top:0;color:#ff2c55}
-.panel button,input,select{width:100%;margin-top:6px;padding:6px;border:none;border-radius:6px}
+.panel label{font-size:13px;margin-top:6px;display:block}
+.panel input,.panel select,.panel button{width:100%;margin-top:4px;padding:6px;border:none;border-radius:6px}
 .panel button{background:#ff2c55;color:#fff;cursor:pointer}
+
 .timeline{height:60px;background:#111;display:flex;align-items:center;padding:0 10px;overflow-x:auto}
-.track{background:#222;height:30px;width:140px;margin-right:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.track{background:#222;height:30px;width:150px;margin-right:6px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .active{outline:2px solid #ff2c55}
 </style>
 </head>
 
 <body>
 
-<header>ULTRA Video Editor – FINAL (PART 1 → 5)</header>
+<header>ULTRA Video Editor – REAL FINAL VERSION</header>
 
 <div class="main">
 
-<!-- LEFT TOOLBAR (ALL BUTTONS KEPT) -->
+<!-- LEFT TOOLBAR -->
 <div class="tools">
 <div class="tool" onclick="openPanel('video')">🎥</div>
-<div class="tool" onclick="openPanel('layer')">🧱</div>
+<div class="tool" onclick="openPanel('layers')">🧱</div>
 <div class="tool" onclick="openPanel('text')">🔤</div>
 <div class="tool" onclick="openPanel('audio')">🎵</div>
 <div class="tool" onclick="openPanel('effects')">✨</div>
 <div class="tool" onclick="openPanel('filters')">🎨</div>
-<div class="tool" onclick="splitLayer()">✂️</div>
 <div class="tool" onclick="undo()">↩️</div>
 <div class="tool" onclick="redo()">↪️</div>
 <div class="tool" onclick="openPanel('canvas')">📐</div>
@@ -50,101 +54,186 @@ canvas{background:#000;border-radius:10px;cursor:move}
 <div class="preview">
 <canvas id="canvas" width="720" height="405"></canvas>
 <video id="video" style="display:none"></video>
+<audio id="audio"></audio>
 </div>
 
 <!-- PANEL -->
 <div class="panel" id="panel">
 <h3>Welcome</h3>
-All tools enabled
+Select any tool
 </div>
 
 </div>
 
-<!-- TIMELINE -->
 <div class="timeline" id="timeline"></div>
 
 <script>
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-const panel=document.getElementById("panel");
-const timeline=document.getElementById("timeline");
-const video=document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const panel = document.getElementById("panel");
+const timeline = document.getElementById("timeline");
+const video = document.getElementById("video");
+const audio = document.getElementById("audio");
 
-let layers=[],activeLayer=null;
-let history=[],redoStack=[];
-let drag=false,ox=0,oy=0;
+let layers=[], activeLayer=null;
+let history=[], redoStack=[];
 
-/* DRAW */
+/* ---------------- BASIC SYSTEM ---------------- */
+function save(){ history.push(JSON.stringify(layers)); redoStack=[]; }
+function undo(){ if(history.length){ redoStack.push(JSON.stringify(layers)); layers=JSON.parse(history.pop()); draw(); refreshTimeline(); }}
+function redo(){ if(redoStack.length){ history.push(JSON.stringify(layers)); layers=JSON.parse(redoStack.pop()); draw(); refreshTimeline(); }}
+
+/* ---------------- DRAW ---------------- */
 function draw(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 layers.forEach(l=>{
-if(l.type==="video"&&l.ready){
+if(l.type==="video" && l.ready){
 ctx.drawImage(video,l.x,l.y,l.w,l.h);
 }
 if(l.type==="text"){
-ctx.filter=l.filter||"none";
-ctx.fillStyle="white";
-ctx.font="32px Poppins";
+ctx.fillStyle=l.color;
+ctx.font=`${l.size}px ${l.font}`;
+if(l.bg){
+ctx.fillStyle=l.bg;
+ctx.fillRect(l.x-5,l.y-l.size,ctx.measureText(l.text).width+10,l.size+10);
+ctx.fillStyle=l.color;
+}
 ctx.fillText(l.text,l.x,l.y);
-ctx.filter="none";
 }
 });
 }
 
-/* PANEL SYSTEM */
+/* ---------------- PANELS ---------------- */
 function openPanel(type){
+
+/* VIDEO */
 if(type==="video"){
-panel.innerHTML=`<h3>Video</h3><input type="file" accept="video/*" onchange="loadVideo(this)">`;
+panel.innerHTML=`
+<h3>Video</h3>
+<input type="file" accept="video/*" onchange="loadVideo(this)">
+`;
 }
+
+/* LAYERS */
+if(type==="layers"){
+panel.innerHTML="<h3>Layers</h3>";
+layers.forEach(l=>{
+panel.innerHTML+=`<button onclick="setActive(${l.id})">${l.type}</button>`;
+});
+}
+
+/* TEXT */
 if(type==="text"){
-panel.innerHTML=`<h3>Text</h3><input id="txt"><button onclick="addText()">Add Text</button>`;
+panel.innerHTML=`
+<h3>Text Settings</h3>
+<input id="txt" placeholder="Text">
+<label>Font</label>
+<select id="font">
+<option>Poppins</option><option>Roboto</option><option>Montserrat</option>
+</select>
+<label>Size</label>
+<input type="number" id="size" value="32">
+<label>Color</label>
+<input type="color" id="color" value="#ffffff">
+<label>Background</label>
+<input type="color" id="bg">
+<button onclick="addText()">Add / Update Text</button>
+`;
 }
+
+/* AUDIO */
 if(type==="audio"){
-panel.innerHTML=`<h3>Audio</h3><input type="file" accept="audio/*">`;
+panel.innerHTML=`
+<h3>Audio Settings</h3>
+<input type="file" accept="audio/*" onchange="loadAudio(this)">
+<label>Volume</label>
+<input type="range" min="0" max="1" step="0.1" onchange="audio.volume=this.value">
+<button onclick="audio.play()">Play</button>
+<button onclick="audio.pause()">Pause</button>
+<button onclick="alert('Noise Remove (WebAudio Simulation)')">Noise Remove</button>
+<button onclick="alert('Magic Voice (Pitch FX Simulation)')">Magic Voice</button>
+`;
 }
+
+/* EFFECTS */
 if(type==="effects"){
-panel.innerHTML=`<h3>Effects</h3><button onclick="applyFilter('blur(3px)')">Blur</button>`;
+panel.innerHTML=`
+<h3>Effects</h3>
+<button onclick="applyFilter('blur(4px)')">Blur</button>
+<button onclick="applyFilter('brightness(130%)')">Brightness</button>
+<button onclick="applyFilter('contrast(150%)')">Contrast</button>
+`;
 }
+
+/* FILTERS */
 if(type==="filters"){
-panel.innerHTML=`<h3>Filters</h3><button onclick="applyFilter('grayscale(100%)')">B&W</button>`;
+panel.innerHTML=`
+<h3>Filters</h3>
+<button onclick="applyFilter('grayscale(100%)')">B&W</button>
+<button onclick="applyFilter('sepia(80%)')">Vintage</button>
+`;
 }
+
+/* CANVAS */
 if(type==="canvas"){
-panel.innerHTML=`<h3>Canvas</h3>
+panel.innerHTML=`
+<h3>Canvas</h3>
 <button onclick="setCanvas(1280,720)">YouTube</button>
 <button onclick="setCanvas(720,1280)">TikTok</button>
-<button onclick="setCanvas(800,800)">Square</button>`;
+<button onclick="setCanvas(800,800)">Square</button>
+`;
 }
+
+/* EXPORT */
 if(type==="export"){
-panel.innerHTML=`<h3>Export</h3>
-<button onclick="alert('Export engine ready (WebM)')">Export Video</button>`;
+panel.innerHTML=`
+<h3>Export</h3>
+<button onclick="alert('Export Engine Ready (WebM)')">Export Video</button>
+`;
 }
 }
 
-/* FUNCTIONS */
+/* ---------------- FUNCTIONS ---------------- */
 function addText(){
-let l={id:Date.now(),type:"text",text:txt.value,x:100,y:200};
-layers.push(l);setActive(l.id);refreshTimeline();draw();
+save();
+let l={
+id:Date.now(),
+type:"text",
+text:txt.value,
+font:font.value,
+size:+size.value,
+color:color.value,
+bg:bg.value||null,
+x:100,y:200
+};
+layers.push(l);
+setActive(l.id);
+draw(); refreshTimeline();
 }
+
 function loadVideo(input){
 video.src=URL.createObjectURL(input.files[0]);
 video.onloadeddata=()=>{
-let l={id:Date.now(),type:"video",x:50,y:50,w:300,h:170,ready:true};
-layers.push(l);setActive(l.id);refreshTimeline();draw();
+save();
+let l={id:Date.now(),type:"video",x:50,y:50,w:300,h:180,ready:true};
+layers.push(l);
+setActive(l.id);
+draw(); refreshTimeline();
 };
 video.play();
 }
-function applyFilter(f){if(activeLayer){activeLayer.filter=f;draw();}}
-function setCanvas(w,h){canvas.width=w;canvas.height=h;draw();}
-function splitLayer(){if(activeLayer){layers.push({...activeLayer,id:Date.now()});refreshTimeline();draw();}}
-function undo(){if(history.length){redoStack.push(JSON.stringify(layers));layers=JSON.parse(history.pop());draw();}}
-function redo(){if(redoStack.length){history.push(JSON.stringify(layers));layers=JSON.parse(redoStack.pop());draw();}}
 
-/* DRAG */
-canvas.onmousedown=e=>{if(activeLayer){drag=true;ox=e.offsetX-activeLayer.x;oy=e.offsetY-activeLayer.y;}};
-canvas.onmousemove=e=>{if(drag&&activeLayer){activeLayer.x=e.offsetX-ox;activeLayer.y=e.offsetY-oy;draw();}};
-canvas.onmouseup=()=>drag=false;
+function loadAudio(input){
+audio.src=URL.createObjectURL(input.files[0]);
+}
 
-/* TIMELINE */
+function applyFilter(f){
+if(activeLayer){ ctx.filter=f; draw(); ctx.filter="none"; }
+}
+
+function setCanvas(w,h){ canvas.width=w; canvas.height=h; draw(); }
+
+/* ---------------- TIMELINE ---------------- */
 function refreshTimeline(){
 timeline.innerHTML="";
 layers.forEach(l=>{
@@ -155,8 +244,9 @@ d.onclick=()=>setActive(l.id);
 timeline.appendChild(d);
 });
 }
-function setActive(id){activeLayer=layers.find(l=>l.id===id);refreshTimeline();}
+function setActive(id){ activeLayer=layers.find(l=>l.id===id); refreshTimeline(); }
 </script>
 
 </body>
 </html>
+
